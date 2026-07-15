@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Limited Submissions Tracker — UMD RDO</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',system-ui,-apple-system,sans-serif;background:#F8F9FA;color:#2D3436}
+#app{max-width:1120px;margin:0 auto;background:#fff;min-height:100vh;box-shadow:0 0 50px rgba(0,0,0,.05)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastIn{from{opacity:0;transform:translateY(-12px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+.header{padding:18px 24px;border-bottom:3px solid #C41230;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.header h1{font-size:20px;font-weight:700;color:#C41230;letter-spacing:-.4px}
+.header .sub{font-size:11px;color:#636E72;margin-top:2px}
+.hbtns{display:flex;gap:8px;flex-wrap:wrap}
+.nav{display:flex;border-bottom:1px solid #E9ECEF;padding:0 24px;background:#FAFBFC}
+.nav button{padding:12px 18px;border:none;background:0;color:#636E72;font:500 13px/1 'DM Sans',sans-serif;cursor:pointer;border-bottom:2.5px solid transparent;transition:all .15s}
+.nav button.on{color:#C41230;border-bottom-color:#C41230;background:#fff}
+.nav button:hover:not(.on){color:#2D3436;background:rgba(0,0,0,.02)}
+.btn{padding:9px 18px;border-radius:7px;font:500 13px/1 'DM Sans',sans-serif;cursor:pointer;transition:all .15s;border:1.5px solid #DEE2E6;background:#fff;color:#2D3436}
+.btn:hover{background:#F5F7FA;border-color:#CED4DA}
+.btn-p{background:#C41230;color:#fff;border-color:#C41230;padding:11px 28px;font-weight:600;font-size:14px}
+.btn-p:hover:not(:disabled){background:#A10E28;border-color:#A10E28;transform:translateY(-1px);box-shadow:0 4px 12px rgba(196,18,48,.25)}
+.btn-p:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-d{color:#C62828;border-color:#FDEDED}
+.btn-d:hover{background:#FDEDED}
+.tw{overflow-x:auto;border-radius:8px;border:1px solid #E9ECEF}
+table.t{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+.t th{background:#2D3436;color:#fff;padding:10px 12px;text-align:left;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:.6px;position:sticky;top:0;z-index:2}
+.t th:first-child{border-radius:6px 0 0 0}.t th:last-child{border-radius:0 6px 0 0}
+.t td{padding:9px 12px;border-bottom:1px solid #F1F3F5;vertical-align:middle}
+.t tr:hover td{background:#F5F7FA}
+.t tr.a td{background:#FAFBFC}.t tr.a:hover td{background:#EEF2F7}
+.bg{display:inline-block;padding:3px 11px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.2px;white-space:nowrap}
+.kr{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+.k{flex:1 1 0;min-width:110px;padding:16px 12px;text-align:center;border-radius:8px;background:#FAFBFC;border:1px solid #F1F3F5;transition:transform .15s,box-shadow .15s}
+.k:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.kb{height:3px;border-radius:2px;margin-bottom:10px}
+.kn{font-size:28px;font-weight:700;color:#2D3436;line-height:1.1}
+.kl{font-size:10px;color:#636E72;margin-top:5px;text-transform:uppercase;letter-spacing:1px;font-weight:500}
+.st{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;padding:4px 12px;border-radius:4px;display:inline-block;margin-bottom:14px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.ff{grid-column:1/-1}
+.fd{margin-bottom:16px}
+.fd label{font-size:12px;font-weight:600;color:#2D3436;margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.fd .rq{color:#C41230;font-size:15px;line-height:1}
+.fi{width:100%;padding:10px 13px;border:1.5px solid #DEE2E6;border-radius:7px;font:400 14px/1.4 'DM Sans',sans-serif;background:#fff;transition:border-color .15s,box-shadow .15s}
+.fi:focus{outline:none;border-color:#2D6A9F;box-shadow:0 0 0 3px rgba(45,106,159,.1)}
+.fi:disabled{background:#F8F9FA;color:#999}
+.ec{padding:4px 8px;border:1.5px solid #DEE2E6;border-radius:5px;font:400 11px/1.3 'DM Sans',sans-serif;background:#fff}
+.toast{position:fixed;top:20px;right:20px;z-index:9999;padding:13px 22px;background:#2E7D32;color:#fff;border-radius:8px;font:500 13px/1 'DM Sans',sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.18);animation:toastIn .3s ease}
+.em{text-align:center;padding:60px 24px;color:#636E72}
+.ei{width:56px;height:56px;border-radius:50%;background:#F1F3F5;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:22px;color:#ADB5BD}
+.br{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px}
+.bl{width:48px;font-weight:500}
+.bt{flex:1;height:16px;background:#F1F3F5;border-radius:4px;overflow:hidden}
+.bf{height:100%;background:#2D6A9F;border-radius:4px;transition:width .5s ease}
+.bc{width:22px;text-align:right;color:#636E72}
+.ct{padding:24px;animation:fadeIn .3s ease}
+.ft{padding:16px 24px;border-top:1px solid #E9ECEF;font-size:11px;color:#ADB5BD;display:flex;justify-content:space-between}
+.eb{margin-bottom:22px;padding:14px 18px;background:#F5F7FA;border-radius:8px;border:1px solid #E9ECEF}
+.eb label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;cursor:pointer}
+.eb input[type=checkbox]{accent-color:#2D6A9F}
+.el{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+var S="ls-tracker-v3",C=["CMNS","ENGR","BSOS","ARHU","EDUC","SPHL","AGNR","ARCH","BMGT","INFO","JOUR","Other"],IS=["Received","Under Review","Selected","Not Selected","Withdrawn"],SS=["Not Yet Submitted","Submitted","Awarded","Declined","Pending","Withdrawn"],RS=["Not Due","Pending","Submitted","Overdue","N/A"];
+var SC={Selected:{b:"#E8F5E9",t:"#2E7D32"},"Not Selected":{b:"#F5F5F5",t:"#757575"},Withdrawn:{b:"#FFF8E1",t:"#E65100"},"Under Review":{b:"#EBF2FA",t:"#2D6A9F"},Received:{b:"#F3E8FD",t:"#7B1FA2"},Awarded:{b:"#E8F5E9",t:"#2E7D32"},Declined:{b:"#FDEDED",t:"#C62828"},Submitted:{b:"#EBF2FA",t:"#2D6A9F"},"Not Yet Submitted":{b:"#F5F5F5",t:"#757575"},Pending:{b:"#FFF8E1",t:"#E65100"},Overdue:{b:"#FDEDED",t:"#C62828"},"Not Due":{b:"#F5F5F5",t:"#999"}};
+var R=[],V="dashboard",EI=-1,TT;
+function ld(){try{R=JSON.parse(localStorage.getItem(S)||"[]")}catch(e){R=[]}}
+function sv(){localStorage.setItem(S,JSON.stringify(R))}
+function fy(d){if(!d)return"FY26";var t=new Date(d+"T00:00:00");return t.getMonth()>=6?"FY"+(t.getFullYear()+1).toString().slice(-2):"FY"+t.getFullYear().toString().slice(-2)}
+function uc(){return[...new Set(R.map(function(r){return r.c}))]}
+function gc(f){var p="LS-"+f+"-",n=[...new Set(R.filter(function(r){return r.c.startsWith(p)}).map(function(r){return r.c}))].length;return p+(n+1).toString().padStart(3,"0")}
+function gr(c){var n=R.filter(function(r){return r.c===c}).length;return c+"-A"+(n+1).toString().padStart(2,"0")}
+function e(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
+function bg(s){var c=SC[s]||{b:"#F5F5F5",t:"#666"};return'<span class="bg" style="background:'+c.b+";color:"+c.t+'">'+e(s)+"</span>"}
+function ts(m){clearTimeout(TT);var el=document.getElementById("tst");if(!el){el=document.createElement("div");el.id="tst";el.className="toast";document.body.appendChild(el)}el.textContent=m;el.style.display="block";TT=setTimeout(function(){el.style.display="none"},3000)}
+
+function samp(){
+R=[
+{c:"LS-FY26-001",o:"Claude D. Pepper Older Americans Independence Centers (P30)",s:"NIH/NIA",sd:"2025-10-20",id:"2025-09-15",mn:1,f:"FY26",ir:"",r:"LS-FY26-001-A01",n:"Smith, Robert",cl:"BSOS",dp:"Kinesiology",em:"rsmith@umd.edu",is:"Selected",nm:"Yes",dt:"09/18/2025",ss:"Submitted",aw:"",as:"",ae:"",rd:"",rs:"N/A",nt:"",up:"09/18/2025"},
+{c:"LS-FY26-001",o:"Claude D. Pepper Older Americans Independence Centers (P30)",s:"NIH/NIA",sd:"2025-10-20",id:"2025-09-15",mn:1,f:"FY26",ir:"",r:"LS-FY26-001-A02",n:"Johnson, Maria",cl:"SPHL",dp:"Epidemiology",em:"mjohnson@umd.edu",is:"Not Selected",nm:"No",dt:"09/18/2025",ss:"",aw:"",as:"",ae:"",rd:"",rs:"N/A",nt:"",up:"09/18/2025"},
+{c:"LS-FY26-001",o:"Claude D. Pepper Older Americans Independence Centers (P30)",s:"NIH/NIA",sd:"2025-10-20",id:"2025-09-15",mn:1,f:"FY26",ir:"",r:"LS-FY26-001-A03",n:"Lee, David",cl:"CMNS",dp:"Biology",em:"dlee@umd.edu",is:"Withdrawn",nm:"No",dt:"",ss:"",aw:"",as:"",ae:"",rd:"",rs:"N/A",nt:"Withdrew before review",up:"09/10/2025"},
+{c:"LS-FY26-002",o:"Institutional Project Support (IPS) Program",s:"Japan Foundation",sd:"2025-12-01",id:"2025-10-15",mn:1,f:"FY26",ir:"",r:"LS-FY26-002-A01",n:"Tanaka, Yuki",cl:"ARHU",dp:"Languages & Literatures",em:"ytanaka@umd.edu",is:"Selected",nm:"Yes",dt:"10/20/2025",ss:"Awarded",aw:"150000",as:"2026-04-01",ae:"2029-03-31",rd:"10/1/2026",rs:"Not Due",nt:"",up:"10/20/2025"},
+{c:"LS-FY26-002",o:"Institutional Project Support (IPS) Program",s:"Japan Foundation",sd:"2025-12-01",id:"2025-10-15",mn:1,f:"FY26",ir:"",r:"LS-FY26-002-A02",n:"Park, Soo-jin",cl:"BSOS",dp:"Government & Politics",em:"spark@umd.edu",is:"Not Selected",nm:"No",dt:"10/20/2025",ss:"",aw:"",as:"",ae:"",rd:"",rs:"N/A",nt:"",up:"10/20/2025"},
+{c:"LS-FY26-003",o:"Environmental Health Sciences Core Centers (P30)",s:"NIH/NIEHS",sd:"2026-04-20",id:"2026-03-01",mn:1,f:"FY26",ir:"",r:"LS-FY26-003-A01",n:"Garcia, Elena",cl:"SPHL",dp:"Environmental Health",em:"egarcia@umd.edu",is:"Under Review",nm:"No",dt:"",ss:"",aw:"",as:"",ae:"",rd:"",rs:"N/A",nt:"",up:"03/05/2026"},
+{c:"LS-FY26-004",o:"Keck Research Program",s:"W.M. Keck Foundation",sd:"2025-11-15",id:"2025-10-01",mn:1,f:"FY26",ir:"",r:"LS-FY26-004-A01",n:"Patel, Anita",cl:"ENGR",dp:"Mechanical Engineering",em:"apatel@umd.edu",is:"Selected",nm:"Yes",dt:"10/10/2025",ss:"Submitted",aw:"",as:"",ae:"",rd:"",rs:"N/A",nt:"",up:"10/10/2025"}
+];sv();dr();ts("7 sample records loaded")}
+
+function csv(){
+if(!R.length)return;
+var h=["Competition_ID","Opportunity_Name","Sponsor","Sponsor_Deadline","Internal_Deadline","Max_Nominations","Fiscal_Year","InfoReady_Link","Record_ID","Applicant_Name","College","Department","Email","Internal_Status","Selected_as_Nominee","Selection_Date","Sponsor_Sub_Status","Award_Amount","Award_Start","Award_End","Report_Due","Report_Status","Notes","Last_Updated"];
+var k=["c","o","s","sd","id","mn","f","ir","r","n","cl","dp","em","is","nm","dt","ss","aw","as","ae","rd","rs","nt","up"];
+var rows=R.map(function(x){return k.map(function(key){var v=String(x[key]||"");return v.indexOf(",")>=0?'"'+v+'"':v}).join(",")});
+var d=h.join(",")+"\n"+rows.join("\n");
+var b=new Blob([d],{type:"text/csv"});var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="LS_Export_"+new Date().toISOString().slice(0,10)+".csv";a.click();URL.revokeObjectURL(a.href);
+ts("CSV exported — open in Excel or import to Google Sheets")}
+
+function rst(){if(confirm("Delete ALL records? Cannot be undone.")){R=[];sv();dr();ts("All records cleared")}}
+
+// ===== RENDER =====
+function dr(){
+var a=document.getElementById("app"),u=uc(),nm=R.filter(function(x){return x.nm==="Yes"}),aw=R.filter(function(x){return x.ss==="Awarded"}),fd=aw.reduce(function(s,x){return s+(parseFloat(x.aw)||0)},0),op=u.filter(function(c){return R.filter(function(x){return x.c===c}).some(function(x){return x.is==="Under Review"||x.is==="Received"})});
+var h='<div class="header"><div><h1>Limited Submissions Tracker</h1><div class="sub">Research Development Office — University of Maryland, College Park</div></div><div class="hbtns">';
+if(!R.length)h+='<button class="btn" onclick="samp()">Load sample data</button>';
+h+='<button class="btn" onclick="csv()">\u2B07 Export CSV</button><button class="btn btn-d" onclick="rst()">Reset</button></div></div>';
+h+='<div class="nav">';
+["dashboard","form","table","nominees"].forEach(function(v,i){
+  var labels=["Dashboard","+ New Record","All Records","Nominees Export"];
+  h+='<button class="'+(V===v?"on":"")+'" onclick="nv(\''+v+'\')">'+labels[i]+'</button>';
+});
+h+='</div><div class="ct">';
+
+if(V==="dashboard"){
+h+='<div class="kr">';
+[["Competitions",u.length,"#2D6A9F"],["Applicants",R.length,"#7B1FA2"],["Nominees",nm.length,"#E65100"],["Awards",aw.length,"#2E7D32"],["Funding",fd>0?"$"+fd.toLocaleString():"\u2014","#C41230"],["Open",op.length,"#636E72"]].forEach(function(x){
+  h+='<div class="k"><div class="kb" style="background:'+x[2]+'"></div><div class="kn">'+x[1]+'</div><div class="kl">'+x[0]+'</div></div>';
+});
+h+='</div>';
+if(!R.length){h+='<div class="em"><div class="ei">+</div><div style="font-size:16px;font-weight:600;margin-bottom:6px">No records yet</div><div style="font-size:13px;margin-bottom:18px">Add your first competition or load sample data.</div><button class="btn btn-p" onclick="nv(\'form\')">Add first record</button> <button class="btn" onclick="samp()">Load sample data</button></div>'}
+else{
+  h+='<div style="font-size:14px;font-weight:600;margin-bottom:12px">Recent activity</div><div class="tw"><table class="t"><thead><tr><th>Competition</th><th>Applicant</th><th>College</th><th>Status</th><th>Updated</th></tr></thead><tbody>';
+  R.slice().reverse().slice(0,8).forEach(function(x){h+='<tr><td class="el" style="font-weight:500">'+e(x.o)+'</td><td>'+e(x.n)+'</td><td>'+e(x.cl)+'</td><td>'+bg(x.is)+'</td><td style="color:#636E72;font-size:11px">'+e(x.up)+'</td></tr>'});
+  h+='</tbody></table></div>';
+  var ct={};R.forEach(function(x){ct[x.cl]=(ct[x.cl]||0)+1});var sr=Object.entries(ct).sort(function(a,b){return b[1]-a[1]});var mx=sr[0]?sr[0][1]:1;
+  h+='<div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:24px"><div><div style="font-size:13px;font-weight:600;margin-bottom:10px">Applications by college</div>';
+  sr.forEach(function(x){h+='<div class="br"><span class="bl">'+e(x[0])+'</span><div class="bt"><div class="bf" style="width:'+(x[1]/mx*100)+'%"></div></div><span class="bc">'+x[1]+'</span></div>'});
+  h+='</div><div><div style="font-size:13px;font-weight:600;margin-bottom:10px">Sponsor outcomes</div>';
+  var sc={};nm.forEach(function(x){var s=x.ss||"Not Yet Submitted";sc[s]=(sc[s]||0)+1});
+  Object.entries(sc).forEach(function(x){h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px">'+bg(x[0])+' <span style="color:#636E72">\u00D7 '+x[1]+'</span></div>'});
+  h+='</div></div>';
+}}
+
+else if(V==="form"){
+var hc=u.length>0;
+h+='<div style="max-width:660px">';
+if(hc){h+='<div class="eb"><label><input type="checkbox" id="ue" onchange="te()"> Add another applicant to an existing competition</label><div id="es" style="display:none"><select class="fi" id="pc" onchange="pe()" style="margin-top:10px"><option value="">Select competition...</option>';
+var sn={};R.forEach(function(x){if(!sn[x.c])sn[x.c]=x});Object.keys(sn).forEach(function(c){var x=sn[c];h+='<option value="'+e(c)+'">'+e(c)+' \u2014 '+e(x.o.substring(0,50))+(x.o.length>50?"...":"")+"</option>"});
+h+='</select></div></div>'}
+h+='<div class="st" style="background:#EBF2FA;color:#2D6A9F">Competition info</div><div class="fg">';
+h+='<div class="fd ff"><label>Opportunity name <span class="rq">*</span></label><input class="fi" id="fo" placeholder="e.g., Claude D. Pepper Older Americans Independence Centers (P30)"></div>';
+h+='<div class="fd"><label>Sponsor <span class="rq">*</span></label><input class="fi" id="fs" placeholder="e.g., NIH/NIA"></div>';
+h+='<div class="fd"><label>Max nominations <span class="rq">*</span></label><input class="fi" id="fm" type="number" min="1" value="1"></div>';
+h+='<div class="fd"><label>Sponsor deadline <span class="rq">*</span></label><input class="fi" id="fsd" type="date"></div>';
+h+='<div class="fd"><label>Internal deadline <span class="rq">*</span></label><input class="fi" id="fid" type="date"></div>';
+h+='<div class="fd ff"><label>InfoReady link</label><input class="fi" id="fl" placeholder="https://umd.infoready4.com/#competitionDetail/..."></div></div>';
+h+='<div class="st" style="background:#F3E8FD;color:#7B1FA2;margin-top:4px">Applicant info</div><div class="fg">';
+h+='<div class="fd"><label>Applicant name <span class="rq">*</span></label><input class="fi" id="fn" placeholder="Last, First"></div>';
+h+='<div class="fd"><label>College <span class="rq">*</span></label><select class="fi" id="fc"><option value="">Select college...</option>'+C.map(function(c){return"<option>"+c+"</option>"}).join("")+'</select></div>';
+h+='<div class="fd"><label>Department <span class="rq">*</span></label><input class="fi" id="fd" placeholder="e.g., Computer Science"></div>';
+h+='<div class="fd"><label>Email <span class="rq">*</span></label><input class="fi" id="fe" type="email" placeholder="name@umd.edu"></div>';
+h+='<div class="fd ff"><label>Notes</label><textarea class="fi" id="fnt" rows="2" placeholder="Optional notes (no reviewer data)" style="resize:vertical"></textarea></div></div>';
+h+='<div style="display:flex;align-items:center;gap:12px;margin-top:4px"><button class="btn btn-p" onclick="sf()">Add record</button><span id="fh" style="font-size:12px;color:#636E72"></span></div></div>';
+}
+
+else if(V==="table"){
+h+='<div style="font-size:13px;color:#636E72;margin-bottom:12px">'+R.length+' record'+(R.length!==1?'s':'')+' across '+u.length+' competition'+(u.length!==1?'s':'')+(R.length>0?' \u00B7 click row to edit':'')+'</div>';
+if(!R.length){h+='<div class="em"><div class="ei">\uD83D\uDCCB</div><div style="font-size:14px">No records to display</div></div>'}
+else{
+h+='<div class="tw"><table class="t"><thead><tr><th>Comp ID</th><th>Opportunity</th><th>Sponsor</th><th>Record ID</th><th>Applicant</th><th>College</th><th>Int. Status</th><th>Nom?</th><th>Sponsor Status</th><th>Award $</th><th>Report</th><th style="width:28px"></th></tr></thead><tbody>';
+R.forEach(function(x,i){
+  var pv=i>0?R[i-1].c:"",nw=x.c!==pv,gi=u.indexOf(x.c),al=gi%2===1,ed=EI===i;
+  h+='<tr class="'+(al?'a':'')+'" style="cursor:pointer" onclick="te2('+i+')">';
+  h+='<td style="font-family:monospace;font-size:11px;font-weight:'+(nw?600:400)+';color:'+(nw?'#2D6A9F':'#CCC')+'">'+(nw?e(x.c):'\u21B3')+'</td>';
+  h+='<td class="el" style="font-weight:'+(nw?500:400)+'">'+e(x.o)+'</td>';
+  h+='<td style="font-size:11px">'+e(x.s)+'</td>';
+  h+='<td style="font-family:monospace;font-size:10px;color:#999">'+e(x.r)+'</td>';
+  h+='<td style="font-weight:500">'+e(x.n)+'</td>';
+  h+='<td style="font-size:11px">'+e(x.cl)+'</td>';
+  if(ed){
+    h+='<td><select class="ec" onchange="uf('+i+',\'is\',this.value)" onclick="event.stopPropagation()">'+IS.map(function(v){return'<option'+(x.is===v?' selected':'')+'>'+v+'</option>'}).join('')+'</select></td>';
+    h+='<td><select class="ec" onchange="uf('+i+',\'nm\',this.value)" onclick="event.stopPropagation()"><option'+(x.nm==='Yes'?' selected':'')+'>Yes</option><option'+(x.nm==='No'?' selected':'')+'>No</option></select></td>';
+    h+='<td><select class="ec" onchange="uf('+i+',\'ss\',this.value)" onclick="event.stopPropagation()"><option value="">\u2014</option>'+SS.map(function(v){return'<option'+(x.ss===v?' selected':'')+'>'+v+'</option>'}).join('')+'</select></td>';
+    h+='<td><input class="ec" style="width:75px" value="'+e(x.aw)+'" placeholder="$" oninput="uf('+i+',\'aw\',this.value)" onclick="event.stopPropagation()"></td>';
+    h+='<td><select class="ec" onchange="uf('+i+',\'rs\',this.value)" onclick="event.stopPropagation()">'+RS.map(function(v){return'<option'+(x.rs===v?' selected':'')+'>'+v+'</option>'}).join('')+'</select></td>';
+    h+='<td><button onclick="event.stopPropagation();dl('+i+')" style="background:none;border:none;color:#C62828;cursor:pointer;font-size:16px" title="Delete">\u00D7</button></td>';
+  }else{
+    h+='<td>'+bg(x.is)+'</td>';
+    h+='<td style="font-weight:'+(x.nm==='Yes'?600:400)+';color:'+(x.nm==='Yes'?'#2E7D32':'#CCC')+'">'+x.nm+'</td>';
+    h+='<td>'+(x.ss?bg(x.ss):'<span style="color:#DDD">\u2014</span>')+'</td>';
+    h+='<td>'+(x.aw?'$'+Number(x.aw).toLocaleString():'<span style="color:#DDD">\u2014</span>')+'</td>';
+    h+='<td>'+(x.rs&&x.rs!=='N/A'?bg(x.rs):'<span style="color:#DDD">\u2014</span>')+'</td>';
+    h+='<td></td>';
+  }
+  h+='</tr>';
+});
+h+='</tbody></table></div>';}}
+
+else if(V==="nominees"){
+h+='<div style="font-size:13px;color:#636E72;margin-bottom:12px">'+nm.length+' nominee'+(nm.length!==1?'s':'')+' \u2014 matches the Nominees Export tab in Excel</div>';
+if(!nm.length){h+='<div class="em"><div class="ei">\uD83C\uDFC6</div><div style="font-size:14px;margin-bottom:6px">No nominees yet</div><div style="font-size:12px">Set Internal Status \u2192 Selected and Nominee \u2192 Yes in All Records</div></div>'}
+else{
+h+='<div class="tw"><table class="t"><thead><tr><th>FY</th><th>Opportunity</th><th>Sponsor</th><th>Nominee</th><th>College</th><th>Department</th><th>Sponsor Status</th></tr></thead><tbody>';
+nm.forEach(function(x){h+='<tr><td style="font-weight:500">'+e(x.f)+'</td><td style="font-weight:500">'+e(x.o)+'</td><td>'+e(x.s)+'</td><td style="font-weight:600">'+e(x.n)+'</td><td>'+e(x.cl)+'</td><td>'+e(x.dp)+'</td><td>'+(x.ss?bg(x.ss):'<span style="color:#DDD">\u2014</span>')+'</td></tr>'});
+h+='</tbody></table></div>';}}
+
+h+='</div><div class="ft"><span>Data stored in browser localStorage \u00B7 Export CSV to sync with Excel</span><span>POC v1.0 \u00B7 April 2026</span></div>';
+a.innerHTML=h}
+
+function nv(v){V=v;EI=-1;dr()}
+function te2(i){EI=EI===i?-1:i;dr()}
+function uf(i,f,v){R[i][f]=v;R[i].up=new Date().toLocaleDateString("en-US");sv();var tmp=EI;dr();EI=tmp;dr()}
+function dl(i){R.splice(i,1);sv();EI=-1;dr();ts("Record deleted")}
+function te(){var el=document.getElementById("es");el.style.display=document.getElementById("ue").checked?"block":"none"}
+function pe(){var c=document.getElementById("pc").value;if(!c)return;var x=R.find(function(r){return r.c===c});if(!x)return;
+document.getElementById("fo").value=x.o;document.getElementById("fo").disabled=true;
+document.getElementById("fs").value=x.s;document.getElementById("fs").disabled=true;
+document.getElementById("fm").value=x.mn;document.getElementById("fm").disabled=true;
+document.getElementById("fsd").value=x.sd;document.getElementById("fsd").disabled=true;
+document.getElementById("fid").value=x.id;document.getElementById("fid").disabled=true;
+document.getElementById("fl").value=x.ir||"";document.getElementById("fl").disabled=true;
+document.getElementById("fh").textContent="Adding to "+c}
+
+function sf(){
+var o=document.getElementById("fo").value.trim(),s=document.getElementById("fs").value.trim(),sd=document.getElementById("fsd").value,id=document.getElementById("fid").value,mn=document.getElementById("fm").value,ir=document.getElementById("fl").value.trim(),n=document.getElementById("fn").value.trim(),cl=document.getElementById("fc").value,dp=document.getElementById("fd").value.trim(),em=document.getElementById("fe").value.trim(),nt=document.getElementById("fnt").value.trim();
+if(!o||!s||!sd||!id||!n||!cl||!dp||!em){ts("Please fill all required fields");return}
+var f=fy(sd),ci="",pk=document.getElementById("pc");
+if(pk&&document.getElementById("ue")&&document.getElementById("ue").checked)ci=pk.value;
+if(!ci){var mt=R.find(function(x){return x.o===o&&x.s===s});ci=mt?mt.c:gc(f)}
+var ri=gr(ci),now=new Date().toLocaleDateString("en-US");
+R.push({c:ci,o:o,s:s,sd:sd,id:id,mn:parseInt(mn)||1,f:f,ir:ir,r:ri,n:n,cl:cl,dp:dp,em:em,is:"Received",nm:"No",dt:"",ss:"",aw:"",as:"",ae:"",rd:"",rs:"N/A",nt:nt,up:now});
+sv();ts("Record "+ri+" added");V="table";dr()}
+
+ld();dr();
+</script>
+</body>
+</html>

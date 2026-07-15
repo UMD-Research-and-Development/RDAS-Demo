@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMD Foundation Opportunities Tracker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Source Sans Pro', system-ui, sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+const { useState, useMemo } = React;
+
+// Icons as simple SVG components
+const ChevronDown = ({ className }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    </svg>
+);
+
+const ChevronRight = ({ className }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+);
+
+const Search = ({ className }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+);
+
+const Filter = ({ className }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+    </svg>
+);
+
+const Archive = ({ className }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+    </svg>
+);
+
+const Calendar = ({ className }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+);
+
+const RefreshCw = ({ className }) => (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+    </svg>
+);
+
+const opportunitiesData = [
+  {"sponsor": "Henry Luce Foundation", "program_name": "Democracy, Ethics, & Public Trust – Grant Categories", "award_amount": "", "keywords": "mental health care, health systems, innovation", "type": "Concept Notes", "limitation": "", "internal_deadline": "", "external_deadline": "2025-12-15", "notes": "", "early_investigator": ""},
+  {"sponsor": "Coefficient Giving", "program_name": "Global Catastropic Risk", "award_amount": "$25k - $1.8m", "keywords": "transformative AI, biosecurity, pandemic", "type": "Expression of Interest, RFP", "limitation": "", "internal_deadline": "", "external_deadline": "Rolling", "notes": "", "early_investigator": ""},
+  {"sponsor": "Robert Wood Johnson Foundation", "program_name": "Health Policy Fellows", "award_amount": "", "keywords": "health policy, leadership, federal government", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-11-03", "notes": "Mid-career professionals in health policy or related fields", "early_investigator": ""},
+  {"sponsor": "Robert Wood Johnson Foundation", "program_name": "Health Equity Scholars for Action", "award_amount": "", "keywords": "health equity, early-career, social determinants", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-11-06", "notes": "Early-career scholars pursuing research advancing health equity", "early_investigator": "✔"},
+  {"sponsor": "Wellcome Trust", "program_name": "Mental Health Award: Transforming Early Intervention for Anxiety & Depression in Young People", "award_amount": "", "keywords": "youth mental health, anxiety, depression", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-11-11", "notes": "Focus on anxiety & depression in youth; global eligibility", "early_investigator": ""},
+  {"sponsor": "Chan Zuckerberg Initiative", "program_name": "Advancing Technologies for Spatiotemporal Omics in Live Tissue", "award_amount": "", "keywords": "spatiotemporal omics, imaging, technology development", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-11-13", "notes": "Open; cross-disciplinary bioimaging/omics", "early_investigator": ""},
+  {"sponsor": "Chan Zuckerberg Initiative", "program_name": "Implementation of Synthetic Biology Principles in Immunology", "award_amount": "", "keywords": "synthetic biology, immunology, systems biology", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-11-13", "notes": "Open; synthetic biology approaches to immune research", "early_investigator": ""},
+  {"sponsor": "Michael J. Fox Foundation", "program_name": "Edmond J. Safra Fellowship in Movement Disorders", "award_amount": "", "keywords": "education research, postdoctoral, social sciences", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-11-13", "notes": "Institutional nominations for neurology training", "early_investigator": ""},
+  {"sponsor": "ACLS", "program_name": "Digital Justice Grants", "award_amount": "", "keywords": "digital humanities, social justice, community", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-11-20", "notes": "Humanities & social science; digital access & equity", "early_investigator": ""},
+  {"sponsor": "U.S.–Israel Binational Science Foundation (BSF)", "program_name": "Research Grants", "award_amount": "", "keywords": "binational research, Israel, basic science", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-12-03", "notes": "U.S.–Israel collaboration required", "early_investigator": ""},
+  {"sponsor": "Simons Foundation", "program_name": "Postdoctoral Fellowships in Plant Biology", "award_amount": "", "keywords": "plant biology, postdoctoral, fundamental research", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-12-04", "notes": "Postdoc level; international eligibility", "early_investigator": "✔"},
+  {"sponsor": "Rita Allen Foundation", "program_name": "Scholars Award in Pain", "award_amount": "", "keywords": "pain research, neuroscience, early-career", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-12-10", "notes": "Early-career faculty; pain research focus", "early_investigator": "✔"},
+  {"sponsor": "ACM (Association for Computing Machinery)", "program_name": "A. M. Turing Award", "award_amount": "", "keywords": "computer science, theoretical computer science, lifetime achievement", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-12-15", "notes": "Open; honors major contributions to computing", "early_investigator": ""},
+  {"sponsor": "Elsa U. Pardee Foundation", "program_name": "Cancer Research Grants", "award_amount": "", "keywords": "cancer research, basic science, translational", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "2025-12-15", "notes": "Cancer biology; early-stage investigators favored", "early_investigator": "✔"},
+  {"sponsor": "Klingenstein Philanthropies (KTGF)", "program_name": "Transformation of Mental Health Care Program", "award_amount": "", "keywords": "Biomedical, disease- oriented research", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "8/1/2026*", "notes": "Mental health research; nonprofit/university eligibility", "early_investigator": ""},
+  {"sponsor": "Open Philanthropy", "program_name": "AI Governance", "award_amount": "", "keywords": "AI governance, policy, global risks", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "Rolling", "notes": "", "early_investigator": ""},
+  {"sponsor": "Open Philanthropy", "program_name": "Capacity-Building for Transformative AI Risks", "award_amount": "", "keywords": "AI safety, capacity-building, global catastrophic risk", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "Rolling", "notes": "", "early_investigator": ""},
+  {"sponsor": "Open Philanthropy", "program_name": "Programs & Events on Global Catastrophic Risk / Effective Altruism", "award_amount": "", "keywords": "global catastrophic risk, effective altruism, events", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "Rolling", "notes": "", "early_investigator": ""},
+  {"sponsor": "Social Science Research Council", "program_name": "Economic Research Rescue Fund", "award_amount": "", "keywords": "economics, disrupted research, NSF-funded", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "Rolling", "notes": "", "early_investigator": ""},
+  {"sponsor": "NAEd/Spencer Foundation", "program_name": "Postdoctoral Fellowship", "award_amount": "", "keywords": "artificial intelligence, research institutes, multi-institution", "type": "Full", "limitation": "", "internal_deadline": "", "external_deadline": "", "notes": "Early-career postdocs in education research", "early_investigator": "✔"},
+  {"sponsor": "David and Lucile Packard Foundation", "program_name": "Fellowships for Science and Engineering", "award_amount": "", "keywords": "Natural or physical sciences or engineering", "type": "Limited Submission", "limitation": "2", "internal_deadline": "January", "external_deadline": "2025-03-15", "notes": "w/in 3 years of faculty appointment", "early_investigator": "✔"},
+  {"sponsor": "Brown Institute for Basic Science", "program_name": "Brown Investigator Award", "award_amount": "", "keywords": "Physics, Chemistry", "type": "Limited Submission", "limitation": "1", "internal_deadline": "August", "external_deadline": "2025-09-15", "notes": "Mid-career faculty", "early_investigator": ""},
+  {"sponsor": "W. M. Keck Foundation", "program_name": "Medical Research Program & Science and Engineering Program", "award_amount": "", "keywords": "High-risk medicine, science, and engineering", "type": "Limited Submission", "limitation": "2", "internal_deadline": "April", "external_deadline": "2025-11-01", "notes": "Open", "early_investigator": "✔"},
+  {"sponsor": "Carnegie Corporation of New York", "program_name": "Andrew Carnegie Fellows Program", "award_amount": "", "keywords": "Political Polarization", "type": "Limited Submission", "limitation": "2", "internal_deadline": "September", "external_deadline": "2025-11-07", "notes": "One Junior Scholar, One Senior Scholar", "early_investigator": "✔"},
+  {"sponsor": "G. Harold and Leila Y. Mathers Charitable Foundation", "program_name": "Mathers Foundation Grants Program", "award_amount": "", "keywords": "Scientific research, environmental conservation, and patient care", "type": "Limited Submission", "limitation": "3", "internal_deadline": "July", "external_deadline": "2025-11-15", "notes": "Open", "early_investigator": "✔"},
+  {"sponsor": "NSF", "program_name": "National Artificial Intelligence (AI) Research Institutes", "award_amount": "", "keywords": "Immunology, microbiome, structural biology, cellular physiology, cancer biology, genetics, genomics, microbiology and infectious diseases, stem cell biology, and neuroscience", "type": "Limited Submission", "limitation": "", "internal_deadline": "", "external_deadline": "February (Nominations)", "notes": "", "early_investigator": ""},
+  {"sponsor": "Blavatnik Family Foundation", "program_name": "National Awards for Young Scientists", "award_amount": "", "keywords": "Life Sciences, Physical Sciences & Engineering, and Chemical Sciences", "type": "Limited Submission", "limitation": "3", "internal_deadline": "October", "external_deadline": "2025-12-03", "notes": "Tenured or tenure-track academic faculty born after 1982", "early_investigator": "✔"},
+  {"sponsor": "Mallinckrodt", "program_name": "Grants Program", "award_amount": "", "keywords": "Parkinson's disease, movement disorders, clinical training", "type": "Limited Submission", "limitation": "1", "internal_deadline": "June", "external_deadline": "2025-12-04", "notes": "No more than 4 years in a tenure-track position; Every other year.", "early_investigator": "✔"},
+  {"sponsor": "St. Baldrick's", "program_name": "Research Grant Awards", "award_amount": "", "keywords": "Pediatric Cancer", "type": "Limited Submission", "limitation": "1", "internal_deadline": "October", "external_deadline": "2025-12-08", "notes": "Post-doc to Faculty positions", "early_investigator": "✔"},
+  {"sponsor": "St. Baldrick's", "program_name": "Scholar (Career Development) Award", "award_amount": "", "keywords": "Pediatric Cancer", "type": "Limited Submission", "limitation": "1", "internal_deadline": "October", "external_deadline": "2025-12-08", "notes": "Post-doc to Faculty positions", "early_investigator": "✔"},
+  {"sponsor": "Conservation, Food & Health Foundation", "program_name": "Grants Program", "award_amount": "", "keywords": "Environment, food, conservation, health", "type": "Limited Submission", "limitation": "1", "internal_deadline": "October", "external_deadline": "2025-12-22", "notes": "Only one proposal from an organization in any calendar year.", "early_investigator": "✔"},
+  {"sponsor": "Camille & Henry Dreyfus Foundation", "program_name": "Camille Dreyfus Teacher-Scholars Award", "award_amount": "", "keywords": "Chemical sciences", "type": "Limited Submission", "limitation": "1", "internal_deadline": "October", "external_deadline": "2026-02-01", "notes": "early career faculty", "early_investigator": ""},
+  {"sponsor": "Foundation for Food and Agriculture Research (FFAR)", "program_name": "New Innovator in Food and Agriculture Research Award", "award_amount": "", "keywords": "Food & Agriculture", "type": "Limited Submission", "limitation": "1", "internal_deadline": "December", "external_deadline": "2026-02-18", "notes": "w/in 3 years of faculty appointment & 8 years of receiving their Ph.D", "early_investigator": "✔"},
+  {"sponsor": "Council on Library and Information Resources", "program_name": "Recordings at Risk", "award_amount": "", "keywords": "audio preservation, archives, digitization", "type": "Limited Submission", "limitation": "1", "internal_deadline": "January", "external_deadline": "2026-02-24", "notes": "Open", "early_investigator": "✔"},
+  {"sponsor": "G. Harold and Leila Y. Mathers Charitable Foundation", "program_name": "Mathers Foundation Grants Program", "award_amount": "", "keywords": "Immunology, microbiome, structural biology, cellular physiology, cancer biology, genetics, genomics, microbiology and infectious diseases, stem cell biology, and neuroscience", "type": "Limited Submission", "limitation": "3", "internal_deadline": "January", "external_deadline": "2026-02-28", "notes": "Open", "early_investigator": "✔"},
+  {"sponsor": "W. M. Keck Foundation", "program_name": "Medical Research Program & Science and Engineering Program", "award_amount": "", "keywords": "High-risk medicine, science, and engineering", "type": "Limited Submission", "limitation": "2", "internal_deadline": "October", "external_deadline": "2026-05-01", "notes": "Open", "early_investigator": "✔"},
+  {"sponsor": "Schmidt Sciences", "program_name": "Polymaths", "award_amount": "", "keywords": "Mathematics, computer science, natural sciences, and/or engineering", "type": "Limited Submission", "limitation": "2", "internal_deadline": "May", "external_deadline": "10/1/2026*", "notes": "Have achieved tenure or equivalent status within the past three calendar years", "early_investigator": ""},
+  {"sponsor": "AXA Research Fund", "program_name": "AXA Chairs", "award_amount": "", "keywords": "risk research, endowed chair, climate", "type": "Limited Submission", "limitation": "1", "internal_deadline": "September", "external_deadline": "10/10/2026*", "notes": "PhD +10 years minimum", "early_investigator": ""},
+  {"sponsor": "Pew Charitable Trusts", "program_name": "Pew Scholars Program in the Biomedical Sciences", "award_amount": "", "keywords": "Human Health", "type": "Limited Submission", "limitation": "1", "internal_deadline": "March", "external_deadline": "5/14/2026*", "notes": "Young investigators", "early_investigator": "✔"},
+  {"sponsor": "Arnold and Mabel Beckman Foundation", "program_name": "Beckman Scholars Program", "award_amount": "", "keywords": "Chemistry, biochemistry, biological, and medical sciences, or some interdisciplinary combination of these subjects", "type": "Limited Submission", "limitation": "1", "internal_deadline": "March", "external_deadline": "6/13/2026*", "notes": "Open", "early_investigator": "✔"},
+  {"sponsor": "Whitehall Foundation", "program_name": "Whitehall Research Grant", "award_amount": "$300k", "keywords": "biology", "type": "LOI", "limitation": "", "internal_deadline": "", "external_deadline": "2026-01-15", "notes": "Investigators must have less than $200k in extramural funding", "early_investigator": "Yes"},
+  {"sponsor": "Leukemia Research Foundation", "program_name": "Leukemia Research Foundation Grant", "award_amount": "$150k", "keywords": "leukemia, MDS", "type": "LOI", "limitation": "", "internal_deadline": "", "external_deadline": "2026-02-06", "notes": "Must be below current funding threshold", "early_investigator": "Yes"},
+  {"sponsor": "Brady Education Foundation", "program_name": "Brady Education Foundation Research Grants", "award_amount": "$375k", "keywords": "education, children, low-income", "type": "LOI", "limitation": "", "internal_deadline": "", "external_deadline": "2026-02-15", "notes": "", "early_investigator": ""},
+  {"sponsor": "American Federation for Aging Research", "program_name": "Glenn Foundation for Medical Discovery Award", "award_amount": "$555k", "keywords": "aging, biology", "type": "LOI", "limitation": "", "internal_deadline": "", "external_deadline": "2026-02-18", "notes": "", "early_investigator": ""},
+  {"sponsor": "Lasker Foundation", "program_name": "Lasker Award", "award_amount": "$250k", "keywords": "biomedical science, public health", "type": "Nomination", "limitation": "", "internal_deadline": "", "external_deadline": "2026-02-02", "notes": "", "early_investigator": ""},
+  {"sponsor": "Spencer Foundation", "program_name": "Research–Practice Partnerships (RPP)", "award_amount": "", "keywords": "education, research-practice partnerships, K–12", "type": "Pre-Application", "limitation": "", "internal_deadline": "", "external_deadline": "2025-11-14", "notes": "Partnerships between researchers and practitioners; LOI then full", "early_investigator": ""},
+  {"sponsor": "Klingenstein Philanthropies", "program_name": "Klingenstein Fellowship Awards in Neuroscience", "award_amount": "$450k", "keywords": "neurologic, behavioral, clinical, basic science", "type": "RFP", "limitation": "", "internal_deadline": "", "external_deadline": "2026-02-01", "notes": "", "early_investigator": "Yes"},
+  {"sponsor": "Dana Foundation", "program_name": "Neuroscience & Society Grants (Pilot Projects & Rapid Response)", "award_amount": "", "keywords": "neuroscience, ethics, society", "type": "Rolling/LOI", "limitation": "", "internal_deadline": "", "external_deadline": "2025-12-31", "notes": "Supports neuroscience + society interfaces", "early_investigator": ""},
+  {"sponsor": "Brady Education Foundation", "program_name": "Research Project (RP) and Existing Program Evaluation (EPE) – Stage 1", "award_amount": "", "keywords": "education, child development, evaluation", "type": "Stage 1", "limitation": "", "internal_deadline": "", "external_deadline": "2026-02-15", "notes": "Education equity focus; LOI → Stage 1 → Full", "early_investigator": ""}
+];
+
+const parseDeadline = (deadline) => {
+  if (!deadline || deadline === 'Rolling' || deadline.includes('*') || deadline.includes('(')) return null;
+  if (deadline.includes('/')) {
+    const parts = deadline.split('/');
+    if (parts.length === 3) return new Date(parts[2], parts[0] - 1, parts[1]);
+  }
+  const date = new Date(deadline);
+  return isNaN(date.getTime()) ? null : date;
+};
+
+const isExpired = (deadline) => {
+  const date = parseDeadline(deadline);
+  if (!date) return false;
+  return date < new Date();
+};
+
+const getStatus = (deadline) => {
+  if (!deadline) return 'TBD';
+  if (deadline === 'Rolling' || deadline.toLowerCase().includes('rolling')) return 'Open';
+  const date = parseDeadline(deadline);
+  if (!date) return 'Open';
+  if (date < new Date()) return 'Closed';
+  const daysUntil = Math.ceil((date - new Date()) / (1000 * 60 * 60 * 24));
+  if (daysUntil <= 14) return 'Closing Soon';
+  return 'Open';
+};
+
+const formatDeadline = (deadline) => {
+  if (!deadline) return 'TBD';
+  if (deadline === 'Rolling') return 'Rolling';
+  const date = parseDeadline(deadline);
+  if (!date) return deadline;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
+const getDeadlineMonth = (deadline) => {
+  const date = parseDeadline(deadline);
+  if (!date) return null;
+  return date.toLocaleDateString('en-US', { month: 'long' });
+};
+
+function App() {
+  const [activeTab, setActiveTab] = useState('active');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('All');
+  const [monthFilter, setMonthFilter] = useState('All');
+  const [earlyInvestigatorOnly, setEarlyInvestigatorOnly] = useState(false);
+  const [showOpenOnly, setShowOpenOnly] = useState(false);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedRows, setExpandedRows] = useState(new Set());
+  const [sortConfig, setSortConfig] = useState({ key: 'external_deadline', direction: 'asc' });
+  const [activeView, setActiveView] = useState('home');
+  const [logoError, setLogoError] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+
+  const types = useMemo(() => {
+    const uniqueTypes = [...new Set(opportunitiesData.map(o => o.type).filter(Boolean))];
+    return ['All', ...uniqueTypes.sort()];
+  }, []);
+
+  const months = useMemo(() => {
+    const uniqueMonths = [...new Set(opportunitiesData.map(o => getDeadlineMonth(o.external_deadline)).filter(Boolean))];
+    const monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return ['All', ...uniqueMonths.sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b))];
+  }, []);
+
+  const filteredData = useMemo(() => {
+    let data = opportunitiesData.filter(opp => {
+      const expired = isExpired(opp.external_deadline);
+      if (activeTab === 'active' && expired) return false;
+      if (activeTab === 'archived' && !expired) return false;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const searchFields = [opp.sponsor, opp.program_name, opp.keywords, opp.notes].join(' ').toLowerCase();
+        if (!searchFields.includes(query)) return false;
+      }
+      if (typeFilter !== 'All' && opp.type !== typeFilter) return false;
+      if (monthFilter !== 'All' && getDeadlineMonth(opp.external_deadline) !== monthFilter) return false;
+      if (earlyInvestigatorOnly && !opp.early_investigator) return false;
+      if (showOpenOnly && getStatus(opp.external_deadline) === 'Closed') return false;
+      return true;
+    });
+
+    data.sort((a, b) => {
+      let aVal, bVal;
+      if (sortConfig.key === 'external_deadline') {
+        const aDate = parseDeadline(a.external_deadline);
+        const bDate = parseDeadline(b.external_deadline);
+        if (!aDate && !bDate) return 0;
+        if (!aDate) return 1;
+        if (!bDate) return -1;
+        aVal = aDate.getTime();
+        bVal = bDate.getTime();
+      } else {
+        aVal = a[sortConfig.key] || '';
+        bVal = b[sortConfig.key] || '';
+      }
+      if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return data;
+  }, [activeTab, searchQuery, typeFilter, monthFilter, earlyInvestigatorOnly, showOpenOnly, sortConfig]);
+
+  const totalPages = Math.ceil(filteredData.length / entriesPerPage);
+  const paginatedData = filteredData.slice((currentPage - 1) * entriesPerPage, currentPage * entriesPerPage);
+
+  const calendarCells = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstWeekday = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < firstWeekday; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const opps = opportunitiesData.filter(o => {
+        const dl = parseDeadline(o.external_deadline);
+        return dl && dl.getFullYear() === year && dl.getMonth() === month && dl.getDate() === d;
+      });
+      cells.push({ day: d, opportunities: opps });
+    }
+    return cells;
+  }, [calendarMonth]);
+
+  const monthLabel = calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const today = new Date();
+  const isToday = (day) =>
+    today.getFullYear() === calendarMonth.getFullYear() &&
+    today.getMonth() === calendarMonth.getMonth() &&
+    today.getDate() === day;
+
+  const upcoming = useMemo(() =>
+    opportunitiesData
+      .filter(o => !isExpired(o.external_deadline))
+      .map(o => ({ opp: o, date: parseDeadline(o.external_deadline) }))
+      .filter(x => x.date)
+      .sort((a, b) => a.date - b.date)
+      .slice(0, 6),
+    []);
+
+  const closingSoonCount = useMemo(() =>
+    opportunitiesData.filter(o => getStatus(o.external_deadline) === 'Closing Soon').length,
+    []);
+  const sponsorCount = useMemo(() => new Set(opportunitiesData.map(o => o.sponsor)).size, []);
+
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const toggleRow = (index) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  };
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setTypeFilter('All');
+    setMonthFilter('All');
+    setEarlyInvestigatorOnly(false);
+    setShowOpenOnly(false);
+    setCurrentPage(1);
+  };
+
+  const activeCount = opportunitiesData.filter(o => !isExpired(o.external_deadline)).length;
+  const archivedCount = opportunitiesData.filter(o => isExpired(o.external_deadline)).length;
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* UMD Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+          <button
+            onClick={() => setActiveView('home')}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          >
+            {!logoError ? (
+              <img
+                src="umd_logo.png"
+                alt="University of Maryland"
+                className="h-16 w-16 object-contain"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <svg viewBox="0 0 64 56" className="h-12 w-auto" aria-label="University of Maryland">
+                <path d="M4 4 L60 4 L60 36 Q60 48 32 54 Q4 48 4 36 Z" fill="#E21833" stroke="#7A0A1A" strokeWidth="1.5"/>
+                <path d="M4 4 L60 4 L60 36 Q60 48 32 54 Q4 48 4 36 Z" fill="url(#shieldShine)" opacity="0.15"/>
+                <defs>
+                  <linearGradient id="shieldShine" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#fff"/>
+                    <stop offset="100%" stopColor="#000"/>
+                  </linearGradient>
+                </defs>
+                <text x="32" y="34" textAnchor="middle" fill="#FFD200" fontSize="26" fontWeight="bold" fontFamily="Georgia, 'Times New Roman', serif">M</text>
+              </svg>
+            )}
+            <div className="border-l border-gray-300 pl-3 text-left">
+              <div className="font-bold text-gray-900 tracking-wide leading-tight">UNIVERSITY OF MARYLAND</div>
+              <div className="text-xs text-gray-600 mt-0.5">Division of Research</div>
+            </div>
+          </button>
+          <div className="text-gray-600 text-sm hidden sm:block">Foundation Opportunities Tracker</div>
+        </div>
+      </div>
+
+      {/* Navigation Bar */}
+      <div className="bg-[#006B5A] text-white text-sm">
+        <div className="max-w-7xl mx-auto px-6 flex">
+          {[
+            { id: 'home', label: 'HOME' },
+            { id: 'browse', label: 'BROWSE' },
+            { id: 'calendar', label: 'CALENDAR' },
+            { id: 'contact', label: 'CONTACT' }
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveView(item.id)}
+              className={`px-4 py-3 font-medium tracking-wide border-b-2 transition-colors ${
+                activeView === item.id
+                  ? 'bg-[#005546] border-[#FFD200]'
+                  : 'border-transparent hover:bg-[#005546]'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* HOME VIEW */}
+      {activeView === 'home' && (
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="bg-gradient-to-r from-[#006B5A] to-[#008B73] rounded-xl p-8 text-white mb-6 shadow-sm">
+            <h1 className="text-3xl font-bold mb-2">Foundation Opportunities Tracker</h1>
+            <p className="text-teal-50 text-lg mb-3">Research Development Office · University of Maryland</p>
+            <p className="text-teal-50 max-w-2xl mb-5">
+              Track funding deadlines, limited-submission programs, and early-investigator opportunities from foundation sponsors — all in one place.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={() => setActiveView('browse')} className="bg-white text-[#006B5A] px-5 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                Browse Opportunities →
+              </button>
+              <button onClick={() => setActiveView('calendar')} className="bg-[#005546] text-white px-5 py-2 rounded-lg font-medium hover:bg-[#004436] transition-colors border border-white/20">
+                Open Calendar
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="text-3xl font-bold text-[#006B5A]">{activeCount}</div>
+              <div className="text-sm text-gray-600 mt-1">Active Opportunities</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="text-3xl font-bold text-yellow-600">{closingSoonCount}</div>
+              <div className="text-sm text-gray-600 mt-1">Closing Within 14 Days</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="text-3xl font-bold text-gray-600">{archivedCount}</div>
+              <div className="text-sm text-gray-600 mt-1">Archived</div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="text-3xl font-bold text-[#E21833]">{sponsorCount}</div>
+              <div className="text-sm text-gray-600 mt-1">Sponsoring Foundations</div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Upcoming Deadlines</h2>
+              <button onClick={() => setActiveView('browse')} className="text-[#006B5A] text-sm hover:underline font-medium">
+                View all →
+              </button>
+            </div>
+            {upcoming.length === 0 ? (
+              <p className="text-sm text-gray-500 py-4">No dated deadlines coming up.</p>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {upcoming.map((item, i) => (
+                  <div key={i} className="py-3 flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-800 truncate">{item.opp.program_name}</div>
+                      <div className="text-sm text-gray-500 truncate">{item.opp.sponsor}</div>
+                    </div>
+                    <div className="text-sm text-[#006B5A] font-medium whitespace-nowrap">{formatDeadline(item.opp.external_deadline)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Getting Started guide for first-time users */}
+          <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-[#006B5A]/5 to-transparent border-l-4 border-[#006B5A] px-5 py-4 flex items-start gap-3">
+              <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-lg bg-[#006B5A] text-white flex items-center justify-center font-bold">?</div>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800">New here? Quick guide</h2>
+                <p className="text-sm text-gray-600 mt-0.5">How to get the most out of the Foundation Opportunities Tracker in under a minute.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#006B5A]/10 text-[#006B5A] flex items-center justify-center font-bold text-sm">1</div>
+                <div><div className="font-semibold text-gray-800 text-sm">Browse opportunities</div><div className="text-sm text-gray-600 mt-0.5">Every active foundation grant is listed under the <strong>Browse</strong> tab. Filter by sponsor, program type, month, or early-investigator status.</div></div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#006B5A]/10 text-[#006B5A] flex items-center justify-center font-bold text-sm">2</div>
+                <div><div className="font-semibold text-gray-800 text-sm">Read deadline status at a glance</div><div className="text-sm text-gray-600 mt-0.5"><strong className="text-yellow-600">Closing Soon</strong> means less than 14 days out. <strong className="text-gray-500">Rolling</strong> or <strong className="text-gray-500">TBD</strong> stay open until updated by RDO.</div></div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#006B5A]/10 text-[#006B5A] flex items-center justify-center font-bold text-sm">3</div>
+                <div><div className="font-semibold text-gray-800 text-sm">Use the Calendar</div><div className="text-sm text-gray-600 mt-0.5">The <strong>Calendar</strong> tab shows deadlines in a month view so you can plan submission timelines around your teaching or grant cycle.</div></div>
+              </div>
+              <div className="flex gap-3">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#006B5A]/10 text-[#006B5A] flex items-center justify-center font-bold text-sm">4</div>
+                <div><div className="font-semibold text-gray-800 text-sm">Expired opportunities auto-archive</div><div className="text-sm text-gray-600 mt-0.5">Once a deadline passes, the opportunity moves to the <strong>Archived</strong> tab on the Browse view. Historical data stays accessible for context.</div></div>
+              </div>
+              <div className="flex gap-3 md:col-span-2 pt-2 border-t border-gray-100">
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[#E21833]/10 text-[#E21833] flex items-center justify-center">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                </div>
+                <div><div className="font-semibold text-gray-800 text-sm">Questions or missing a foundation?</div><div className="text-sm text-gray-600 mt-0.5">Email <a href="mailto:limitedsubmissions@umd.edu" className="text-[#006B5A] font-medium hover:underline">limitedsubmissions@umd.edu</a> and RDO will add it or clarify eligibility.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CALENDAR VIEW */}
+      {activeView === 'calendar' && (
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+              <h2 className="text-xl font-bold text-gray-800">Deadline Calendar</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
+                  className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-100 text-gray-700"
+                  aria-label="Previous month"
+                >‹</button>
+                <div className="font-semibold text-gray-800 min-w-[160px] text-center">{monthLabel}</div>
+                <button
+                  onClick={() => setCalendarMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
+                  className="px-3 py-1 rounded border border-gray-300 hover:bg-gray-100 text-gray-700"
+                  aria-label="Next month"
+                >›</button>
+                <button
+                  onClick={() => { const n = new Date(); setCalendarMonth(new Date(n.getFullYear(), n.getMonth(), 1)); }}
+                  className="ml-2 px-3 py-1 rounded text-sm bg-[#006B5A] text-white hover:bg-[#005546]"
+                >Today</button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                <div key={d} className="text-xs font-semibold text-gray-500 uppercase text-center py-2">{d}</div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+              {calendarCells.map((cell, i) => (
+                <div
+                  key={i}
+                  className={`min-h-[96px] p-2 rounded-lg border ${
+                    !cell ? 'bg-gray-50 border-gray-100' :
+                    isToday(cell.day) ? 'bg-teal-50 border-[#006B5A]' :
+                    'bg-white border-gray-200'
+                  }`}
+                >
+                  {cell && (
+                    <>
+                      <div className={`text-sm font-medium mb-1 ${isToday(cell.day) ? 'text-[#006B5A]' : 'text-gray-700'}`}>
+                        {cell.day}
+                      </div>
+                      <div className="space-y-1">
+                        {cell.opportunities.slice(0, 3).map((opp, j) => (
+                          <div
+                            key={j}
+                            title={`${opp.program_name} — ${opp.sponsor}`}
+                            className="text-xs px-1.5 py-0.5 bg-[#006B5A] text-white rounded truncate cursor-help"
+                          >
+                            {opp.sponsor}
+                          </div>
+                        ))}
+                        {cell.opportunities.length > 3 && (
+                          <div className="text-xs text-gray-500">+{cell.opportunities.length - 3} more</div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 text-xs text-gray-500">
+              Rolling, TBD, and tentative ("*") deadlines are not plotted — see Browse for the full list.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONTACT VIEW */}
+      {activeView === 'contact' && (
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-3xl">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Contact the Research Development Office</h2>
+            <p className="text-gray-600 mb-6">Questions about foundation opportunities, limited submissions, or suggestions for the tracker.</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border border-gray-200 rounded-lg p-5">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Email</div>
+                <a href="mailto:limitedsubmissions@umd.edu" className="text-[#006B5A] hover:underline font-medium break-all">limitedsubmissions@umd.edu</a>
+                <p className="text-sm text-gray-600 mt-2">For limited-submission coordination and tracker updates.</p>
+              </div>
+
+              <div className="border border-gray-200 rounded-lg p-5">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Office</div>
+                <div className="text-gray-800 font-medium">Research Development Office</div>
+                <div className="text-sm text-gray-600 mt-1">Division of Research<br/>University of Maryland<br/>College Park, MD 20742</div>
+              </div>
+            </div>
+
+            <div className="mt-6 bg-[#E8F4F8] border border-[#B8D4E3] rounded-lg p-5">
+              <div className="font-semibold text-[#006B5A] mb-1">Have a foundation opportunity to add?</div>
+              <p className="text-sm text-gray-700">Send the sponsor, program name, deadline, and a brief description to <a href="mailto:limitedsubmissions@umd.edu" className="text-[#006B5A] hover:underline font-medium">limitedsubmissions@umd.edu</a>.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BROWSE VIEW */}
+      {activeView === 'browse' && (
+      <>
+      <div className="bg-[#E8F4F8] border-b border-[#B8D4E3]">
+        <div className="max-w-7xl mx-auto px-6 py-3">
+          <p className="text-sm text-[#006B5A]">
+            <a href="#" className="text-[#006B5A] hover:underline font-medium">Click here to learn about the latest features and enhancements</a>
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => { setActiveTab('active'); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+              activeTab === 'active' ? 'bg-[#006B5A] text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            Active Opportunities ({activeCount})
+          </button>
+          <button
+            onClick={() => { setActiveTab('archived'); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+              activeTab === 'archived' ? 'bg-gray-700 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+            }`}
+          >
+            <Archive className="w-4 h-4" />
+            Archived ({archivedCount})
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+          <div className="flex items-center gap-2 text-gray-700 font-medium mb-4">
+            <Filter className="w-4 h-4" />
+            Filters
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Category:</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => { setTypeFilter(e.target.value); setCurrentPage(1); }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#006B5A] focus:border-[#006B5A]"
+              >
+                {types.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Deadline Month:</label>
+              <select
+                value={monthFilter}
+                onChange={(e) => { setMonthFilter(e.target.value); setCurrentPage(1); }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#006B5A] focus:border-[#006B5A]"
+              >
+                {months.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Search:</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  placeholder="Search programs, sponsors, keywords..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#006B5A] focus:border-[#006B5A]"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-6">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showOpenOnly}
+                onChange={(e) => { setShowOpenOnly(e.target.checked); setCurrentPage(1); }}
+                className="w-4 h-4 text-[#006B5A] rounded focus:ring-[#006B5A]"
+              />
+              <span className="text-sm text-gray-700">Only show opportunities currently accepting applications</span>
+            </label>
+            
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={earlyInvestigatorOnly}
+                onChange={(e) => { setEarlyInvestigatorOnly(e.target.checked); setCurrentPage(1); }}
+                className="w-4 h-4 text-[#006B5A] rounded focus:ring-[#006B5A]"
+              />
+              <span className="text-sm text-gray-700">Early Investigator Eligible Only</span>
+            </label>
+            
+            <button
+              onClick={resetFilters}
+              className="text-[#006B5A] hover:text-[#005546] text-sm font-medium flex items-center gap-1 underline underline-offset-2"
+            >
+              <RefreshCw className="w-3 h-3" />
+              RESET FILTERS
+            </button>
+          </div>
+        </div>
+
+        {/* Results info */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Show</span>
+            <select
+              value={entriesPerPage}
+              onChange={(e) => { setEntriesPerPage(Number(e.target.value)); setCurrentPage(1); }}
+              className="px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-[#006B5A]"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+            <span>entries</span>
+          </div>
+          <div className="text-sm text-gray-600">
+            Showing {filteredData.length > 0 ? (currentPage - 1) * entriesPerPage + 1 : 0} to {Math.min(currentPage * entriesPerPage, filteredData.length)} of {filteredData.length} entries
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-[#006B5A] text-white">
+                  <th className="w-10 px-4 py-3"></th>
+                  <th className="px-4 py-3 text-left font-semibold cursor-pointer hover:bg-[#005546]" onClick={() => handleSort('program_name')}>
+                    <div className="flex items-center gap-1">
+                      Title
+                      <ChevronDown className={`w-4 h-4 transition-transform ${sortConfig.key === 'program_name' && sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold cursor-pointer hover:bg-[#005546]" onClick={() => handleSort('external_deadline')}>
+                    <div className="flex items-center gap-1">
+                      Due Date
+                      <ChevronDown className={`w-4 h-4 transition-transform ${sortConfig.key === 'external_deadline' && sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} />
+                    </div>
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold">Category</th>
+                  <th className="px-4 py-3 text-left font-semibold">Cycle</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-12 text-center text-gray-500">No opportunities match your filters</td>
+                  </tr>
+                ) : (
+                  paginatedData.map((opp, idx) => {
+                    const globalIdx = (currentPage - 1) * entriesPerPage + idx;
+                    const isOpen = expandedRows.has(globalIdx);
+                    const status = getStatus(opp.external_deadline);
+                    
+                    return (
+                      <React.Fragment key={globalIdx}>
+                        <tr 
+                          className={`border-b border-gray-100 hover:bg-teal-50 cursor-pointer transition-colors ${isOpen ? 'bg-teal-50' : ''}`}
+                          onClick={() => toggleRow(globalIdx)}
+                        >
+                          <td className="px-4 py-4 text-[#006B5A]">
+                            {isOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="font-medium text-[#006B5A] hover:underline cursor-pointer">{opp.program_name}</div>
+                            <div className="text-sm text-gray-500 mt-0.5">{opp.sponsor}</div>
+                            {opp.early_investigator && (
+                              <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Early Investigator</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 text-gray-700 whitespace-nowrap">{formatDeadline(opp.external_deadline)}</td>
+                          <td className="px-4 py-4 text-gray-600 text-sm">{opp.type || 'N/A'}</td>
+                          <td className="px-4 py-4">
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                              status === 'Open' ? 'bg-green-100 text-green-700' :
+                              status === 'Closing Soon' ? 'bg-yellow-100 text-yellow-700' :
+                              status === 'Closed' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {status === 'Open' ? 'Available' : status === 'Closing Soon' ? 'Closing Soon' : status}
+                            </span>
+                          </td>
+                        </tr>
+                        {isOpen && (
+                          <tr className="bg-teal-50/50">
+                            <td colSpan={5} className="px-8 py-4">
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div><span className="font-medium text-gray-700">Funder:</span> <span className="text-gray-600">{opp.sponsor}</span></div>
+                                <div><span className="font-medium text-gray-700">Award Amount:</span> <span className="text-gray-600">{opp.award_amount || 'Not specified'}</span></div>
+                                <div><span className="font-medium text-gray-700">Internal Deadline:</span> <span className="text-gray-600">{opp.internal_deadline || 'N/A'}</span></div>
+                                <div><span className="font-medium text-gray-700">Limitation:</span> <span className="text-gray-600">{opp.limitation ? `${opp.limitation} per institution` : 'None'}</span></div>
+                                <div className="col-span-2"><span className="font-medium text-gray-700">Keywords:</span> <span className="text-gray-600">{opp.keywords || 'N/A'}</span></div>
+                                {opp.notes && <div className="col-span-2"><span className="font-medium text-gray-700">Eligibility Notes:</span> <span className="text-gray-600">{opp.notes}</span></div>}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-6">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 5) pageNum = i + 1;
+              else if (currentPage <= 3) pageNum = i + 1;
+              else if (currentPage >= totalPages - 2) pageNum = totalPages - 4 + i;
+              else pageNum = currentPage - 2 + i;
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`w-8 h-8 rounded font-medium ${
+                    currentPage === pageNum ? 'bg-[#006B5A] text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>Expired opportunities automatically move to the Archive tab.</p>
+          <p className="mt-1">Questions? Contact <a href="mailto:limitedsubmissions@umd.edu" className="text-[#006B5A] hover:underline">limitedsubmissions@umd.edu</a></p>
+        </div>
+      </div>
+      </>
+      )}
+
+      {/* Footer Bar */}
+      <div className="bg-gray-100 border-t border-gray-200 mt-auto py-4">
+        <div className="max-w-7xl mx-auto px-6 text-center text-sm text-gray-600">
+          <p>© {new Date().getFullYear()} University of Maryland, Division of Research</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
